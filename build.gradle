@@ -5,6 +5,7 @@ apply plugin: 'eclipse'
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 version = '1.0'
+mainClassName = 'kr.toolcat.tcputil.main.Starter'
 
 jar {
     manifest {
@@ -18,4 +19,10 @@ repositories {
 
 dependencies {
     compile 'org.slf4j:slf4j-api:1.7.7'
+}
+
+run {
+	if ( project.hasProperty("appArgs") ) {
+		args Eval.me(appArgs)
+	}
 }
