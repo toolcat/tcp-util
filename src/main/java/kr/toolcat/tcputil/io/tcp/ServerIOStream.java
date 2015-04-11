@@ -6,39 +6,83 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import kr.toolcat.tcputil.io.IOStream;
+import kr.toolcat.tcputil.main.Starter;
 
 public class ServerIOStream implements IOStream, Closeable {
 
     private final ServerSocket serverSocket;
-    private final Socket socket;
-    private final InputStream inputStream;
-    private final OutputStream outputStream;
+
+    private Socket socket;
+    private InputStream inputStream;
+    private OutputStream outputStream;
 
     public ServerIOStream(final String port) throws IOException {
         serverSocket = new ServerSocket(Integer.valueOf(port));
-        socket = serverSocket.accept();
+        Starter.EXECUTOR.execute(() -> {
+            try {
+                while (true) {
+                    accept();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+	private void accept() throws IOException {
+		Socket accept = serverSocket.accept();
+		closeClient();
+		socket = accept;
         inputStream = socket.getInputStream();
         outputStream = socket.getOutputStream();
-    }
+	}
 
     @Override
     public int read() throws IOException {
-        return inputStream.read();
+    	if (inputStream != null) {
+    		try {
+				return inputStream.read();
+			} catch (IOException e) {
+				closeClient();
+			}
+    	}
+		return -1;
     }
 
     @Override
     public void write(final int b) throws IOException {
-        outputStream.write(b);
-        outputStream.flush();
+    	if (outputStream != null) {
+    		try {
+        		outputStream.write(b);
+        		outputStream.flush();
+			} catch (IOException e) {
+				closeClient();
+			}
+    	}
     }
 
     @Override
     public void close() throws IOException {
-        inputStream.close();
-        outputStream.close();
-        socket.close();
+        closeClient();
         serverSocket.close();
     }
+
+	private void closeClient() throws IOException {
+		if (inputStream != null) {
+			inputStream.close();
+			inputStream = null;
+		}
+		if (outputStream != null) {
+			outputStream.close();
+			outputStream = null;
+		}
+		if (socket != null) {
+			socket.close();
+			socket = null;
+		}
+	}
 }
