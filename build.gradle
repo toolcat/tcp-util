@@ -5,6 +5,7 @@ apply plugin: 'eclipse'
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 version = '1.0'
+
 mainClassName = 'kr.toolcat.tcputil.main.Starter'
 
 jar {
